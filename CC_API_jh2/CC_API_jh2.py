@@ -8,7 +8,7 @@ Created on Fri Sep 28 08:56:47 2018
 import requests, json, pandas as pd
 
 class CAPICO:
-    
+
     #User-level functions
     '''
     Function gets page views for a user between start and end dates (UTC-8 DateTime objects).
@@ -27,7 +27,7 @@ class CAPICO:
                                headers = {'Authorization': 'Bearer ' + token})
         view_list = CAPICO.paginate_list(request, token)
         return view_list
-    
+
     #Course-level functions
     '''
     Helper function that gets Canvas course information.
@@ -45,11 +45,11 @@ class CAPICO:
                                    headers =  {'Authorization': 'Bearer ' + token})
         info = json.loads(courseInfo.text)
         return info
-    
+
     '''
     Gets all students in a course.
     Parameters:
-        url (String): URL of Canvas instance 
+        url (String): URL of Canvas instance
         class_id (String): Canvas ID of course
         token (String): Canvas token
     Returns:
@@ -57,7 +57,7 @@ class CAPICO:
     '''
     def get_student_list(url, class_id, token):
         return CAPICO.get_course_users(url, token, class_id, 'student')
-    
+
     '''
     Gets all course modules
     Parameters:
@@ -69,10 +69,10 @@ class CAPICO:
     '''
     def get_course_modules(url, class_id, token):
         modules = requests.get(url + '/api/v1/courses/{}/modules?include[]=items'.format(class_id),
-                                    headers = {'Authorization': 'Bearer ' + token}) 
+                                    headers = {'Authorization': 'Bearer ' + token})
         module_list = CAPICO.paginate_list(modules, token)
         return module_list
-    
+
     '''
     Gets all course pages
     Parameters:
@@ -81,10 +81,10 @@ class CAPICO:
         token (String): Canvas token
     Returns:
         Pandas DataFrame of pages in a course
-    ''' 
+    '''
     def get_course_pages(url, class_id, token):
         pages = requests.get(url + '/api/v1/courses/{}/pages'.format(class_id),
-                                    headers = {'Authorization': 'Bearer ' + token}) 
+                                    headers = {'Authorization': 'Bearer ' + token})
         pages_list = CAPICO.paginate_list(pages, token)
         return pages_list
 
@@ -99,10 +99,10 @@ class CAPICO:
     '''
     def get_course_files(url, class_id, token):
         files = requests.get(url + '/api/v1/courses/{}/files'.format(class_id),
-                                    headers = {'Authorization': 'Bearer ' + token}) 
+                                    headers = {'Authorization': 'Bearer ' + token})
         files_list = CAPICO.paginate_list(files, token)
         return files_list
-    
+
     '''
     Gets all users with as specified role in a course
     Parameters:
@@ -120,7 +120,7 @@ class CAPICO:
                                  headers = {'Authorization': 'Bearer ' + token_in})
         user_list = CAPICO.paginate_list(user_list, token_in)
         return user_list
-    
+
     #Course-Quiz Functions
     '''
     Get all submissions for a specified quiz (Incomplete)
@@ -130,7 +130,7 @@ class CAPICO:
         course_in (String): Canvas ID of course
         quiz_in (String): Canvas ID of quiz
     Returns:
-        JSON of all quiz submissions 
+        JSON of all quiz submissions
     '''
     def get_all_quiz_submissions(url_in, token_in, course_in, quiz_in):
         payload = {'include[]': ['submission', 'quiz']}
@@ -143,7 +143,7 @@ class CAPICO:
         else:
             print("Request failed {}.".format(quiz_request))
         return quiz_list
-    
+
     '''
     Gives specified extra time to student
     Parameters:
@@ -160,7 +160,7 @@ class CAPICO:
         r = requests.post(url + '/api/v1/courses/{}/quizzes/{}/extensions?quiz_extensions[][user_id]={}&quiz_extensions[][extend_from_end_at]={}'.format(class_id, quiz_id, student_id, extra_time),
                           headers = {'Authorization': 'Bearer ' + token})
         return r
-    
+
     '''
     Gives specified extra time to all students in a course
     Parameters:
@@ -178,10 +178,10 @@ class CAPICO:
         #Iterate through list and give each student the specified extra time for a specified quiz
         for index, student in student_list.iterrows():
             request = CAPICO.extend_time(url, token, class_id, quiz_id, student['id'], extra_time)
-            
+
             if not request.ok:
                 print("Failed to extend time for {}, {}.".format(student['id'], student['name']))
-        
+
     #Blueprint-level functions
     '''
     Helper function that gets a list of courses associated with a blueprint course (MAY CHANGE WHEN BLUEPRINT SYSTEM UPDATED)
@@ -191,13 +191,13 @@ class CAPICO:
         url: URL of Canvas instance
     '''
     def get_associated_courses(blue_id, token, url):
-        #Request to get all associated courses for a blueprint 
+        #Request to get all associated courses for a blueprint
         courseInfo =  requests.get(url + '/api/v1/courses/{}/blueprint_templates/default/associated_courses'.format(str(blue_id)),
                                    headers =  {'Authorization': 'Bearer ' + token})
         CI_table = CAPICO.paginate_list(courseInfo, token)
-        
+
         return CI_table
-    
+
     '''
     Function adds and removes courses from blueprint associations
     Parameters:
@@ -220,7 +220,7 @@ class CAPICO:
             print("Success")
         else:
             print("Failed {}".format(update_request))
-    
+
     #Subaccount-level functions
     '''
     Function prints out the subaccount structure of a given node
@@ -233,7 +233,7 @@ class CAPICO:
     '''
     def print_subaccount_tree(account_id, token, url):
         CAPICO.print_subaccount_tree_helper(account_id, 0, token, url)
-    
+
     '''
     Recursive helper function
     Parameters:
@@ -249,18 +249,18 @@ class CAPICO:
         sub_list = requests.get(url + '/api/v1/accounts/{}/sub_accounts'.format(account_id),
                                 headers = {'Authorization': 'Bearer ' + token})
         json_list = CAPICO.paginate_list(sub_list, token)
-        
+
         #Iterate through each child, recurse till lowest level
         for index, subaccount in json_list.iterrows():
             for x in range(spaces):
                 print(" ", end="")
                 pass
-            
+
             if(subaccount is not None):
                 print(subaccount['name'])
                 child_id = str(subaccount['id'])
                 CAPICO.print_subaccount_tree_helper(child_id, spaces + 1, token, url)
-    
+
     '''
     Gets the info about a subaccount (Incomplete)
     '''
@@ -272,8 +272,8 @@ class CAPICO:
             return json.loads(account.text)
         else:
             print("Request failed for account {}, response {}.".format(subaccount_in, account))
-            return json.loads(account.text)            
-    
+            return json.loads(account.text)
+
     '''
     Gets all courses under a subaccount (and all of its children accounts as well)
     Parameters:
@@ -286,22 +286,22 @@ class CAPICO:
     def get_account_courses(url_in, token_in, subaccount_in):
         #Payload to include term info and syllabus_body (HTML) for courses
         payload = {'include[]': ['term', 'syllabus_body']}
-        
+
         #Request to get all courses under a subaccount
         master_list = requests.get(url_in + '/api/v1/accounts/{}/courses'.format(subaccount_in),
                                    params = payload,
                                    headers = {'Authorization': 'Bearer ' + token_in})
         returned_list = CAPICO.paginate_list(master_list, token_in)
         return returned_list
-    
+
     def change_course_settings_subaccount(url_in, token_in, subaccount_in, setting_names, setting_value):
-        
+
         #Get all courses in a subaccount
         course_list = CAPICO.get_account_courses(url_in, token_in, subaccount_in)
-        
+
         term = input("Enter term to effect or ALL: ")
         changed = pd.DataFrame()
-        
+
         #Iterates through list, and change setting
         for index, course in course_list.iterrows():
             term_object = course['term']
@@ -309,9 +309,9 @@ class CAPICO:
                 for setting in setting_names:
                     CAPICO.change_course_settings(url_in, token_in, course['id'], setting, setting_value)
                 changed = changed.append(course)
-        
+
         return changed.reset_index(drop=True)
-    
+
     '''
     List all of the enrollment terms under a master account
     Parameteres:
@@ -328,10 +328,10 @@ class CAPICO:
                                  headers = {'Authorization': 'Bearer ' + token_in})
         term_list = CAPICO.paginate_list(term_list, token_in)
         return term_list
-    
+
     #allow_student_organized_groups, enable_offline_web_export
     '''
-    Change settings for a course 
+    Change settings for a course
     Parameters:
         url_in (String): URL of Canvas instance
         token_in (String): Canvas token
@@ -342,12 +342,12 @@ class CAPICO:
         None
     '''
     def change_course_settings(url_in, token_in, course_in, setting_name, setting_value):
-        
+
         payload = {'course[{}]'.format(setting_name): setting_value}
         set_req = requests.put(url_in + "/api/v1/courses/{}".format(course_in),
                                params = payload,
                                headers = {'Authorization': 'Bearer ' + token_in})
-        
+
         if set_req.ok:
             print("Request {}, {} changed to {}.".format(set_req, setting_name, setting_value))
         else:
@@ -359,7 +359,7 @@ class CAPICO:
                 print("Request {}, {} changed to {}.".format(set_req, setting_name, setting_value))
             else:
                 print("Request failed {}.".format(set_req))
-    
+
     #Helper functions
     '''
     Compiles a paginated list into a single Pandas Dataframe
@@ -372,7 +372,7 @@ class CAPICO:
     def paginate_list(sub_list, token):
         json_list = pd.read_json(sub_list.text)
         try:
-            while sub_list.links['current']['url'] != sub_list.links['last']['url']: 
+            while sub_list.links['current']['url'] != sub_list.links['last']['url']:
                 sub_list =  requests.get(sub_list.links['next']['url'],
                                  headers= {'Authorization': 'Bearer ' + token})
                 admin_sub_table = pd.read_json(sub_list.text)
@@ -385,26 +385,26 @@ class CAPICO:
                 admin_sub_table = CAPICO.paginate_list(sub_list, token)
                 json_list= pd.concat([json_list, admin_sub_table], sort=True)
                 json_list=json_list.reset_index(drop=True)
-            
+
         return json_list
 
 '''
 Testing Main
 '''
 if __name__ == "__main__":
-    
+
     token = input("Token: ")
     #user = input("User: ")
     class_id = input("Class ID: ")
     quiz_id = input("Quiz ID: ")
     extra_time = input("Extra Time: ")
-    url = "https://ubc.instructure.com"  
-    
+    url = "https://ubc.instructure.com"
+
     student_list = CAPICO.get_student_list(url, class_id, token)
-    
-    for index, value in student_list.iterrows():  
+
+    for index, value in student_list.iterrows():
         r = requests.post(url + '/api/v1/courses/{}/quizzes/{}/extensions?quiz_extensions[][user_id]={}&quiz_extensions[][extend_from_end_at]={}'.format(class_id, quiz_id, value['id'], extra_time),
                           headers = {'Authorization': 'Bearer ' + token})
-    
-    
+
+
     #print(random.sample(range(1, 21), 20))

@@ -4,4 +4,4 @@ Created on Wed Oct  3 14:51:06 2018
 
 @author: jeremyh2
 """
-from CAPICO.CAPICO import CAPICO
+from CC_API_jh2.CC_API_jh2 import CAPICO
